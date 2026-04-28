@@ -1,0 +1,78 @@
+# Cloud Build pipeline for SalesForge → Cloud Run
+# Triggered on push to main of github.com/annashrul/sales-forge.
+# Note: in inline shell scripts, escape literal shell vars as $$VAR (Cloud Build
+# treats $VAR as a substitution variable). Built-ins like $PROJECT_ID,
+# $BUILD_ID, $SHORT_SHA work as-is.
+
+substitutions:
+  _SERVICE: ai-sales-page
+  _REGION: asia-southeast2
+  _DB_INSTANCE: task-5d4f0:asia-southeast2:ai-sales-page-db
+  _AR_REPO: cloud-run-source-deploy
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s
+
+steps:
+  - id: resolve-tag
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -e
+        TAG="${SHORT_SHA}"
+        if [ -z "$$TAG" ]; then TAG="${BUILD_ID}"; fi
+        IMAGE="asia-southeast2-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}"
+        echo "Tag:   $$TAG"
+        echo "Image: $$IMAGE"
+        echo "$$TAG"   > /workspace/.tag
+        echo "$$IMAGE" > /workspace/.image
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -e
+        IMAGE=$$(cat /workspace/.image)
+        TAG=$$(cat /workspace/.tag)
+        docker build -t "$$IMAGE:$$TAG" -t "$$IMAGE:latest" .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -e
+        IMAGE=$$(cat /workspace/.image)
+        TAG=$$(cat /workspace/.tag)
+        docker push "$$IMAGE:$$TAG"
+        docker push "$$IMAGE:latest"
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -e
+        IMAGE=$$(cat /workspace/.image)
+        TAG=$$(cat /workspace/.tag)
+        gcloud run deploy ${_SERVICE} \
+          --image="$$IMAGE:$$TAG" \
+          --region=${_REGION} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --add-cloudsql-instances=${_DB_INSTANCE} \
+          --memory=1Gi \
+          --cpu=1 \
+          --timeout=300 \
+          --max-instances=3 \
+          --quiet \
+          --set-env-vars=APP_NAME=SalesForge,APP_ENV=production,APP_DEBUG=false,LOG_CHANNEL=stderr,DB_CONNECTION=pgsql,DB_HOST=/cloudsql/${_DB_INSTANCE},DB_PORT=5432,DB_DATABASE=app,DB_USERNAME=app,SESSION_DRIVER=database,CACHE_STORE=database,QUEUE_CONNECTION=sync,AI_PROVIDER=gemini,GEMINI_MODEL=gemini-2.5-flash \
+          --set-secrets=APP_KEY=${_SERVICE}-app-key:latest,DB_PASSWORD=${_SERVICE}-db-pass:latest,GEMINI_API_KEY=${_SERVICE}-gemini-key:latest
