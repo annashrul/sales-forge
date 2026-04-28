@@ -20,7 +20,7 @@ The application is publicly accessible, hosted on Google Cloud Run with a Cloud 
 https://github.com/annashrul/sales-forge
 
 ## Video walkthrough
-[YOUR YOUTUBE LINK]
+https://youtu.be/VorzXSMBGiQ
 
 A ~7-minute screen recording covering the technical approach and a full end-to-end walkthrough — registering, generating a sales page, previewing across templates, regenerating, exporting HTML, and deletion.
 
