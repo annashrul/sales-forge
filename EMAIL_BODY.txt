@@ -1,0 +1,24 @@
+Dear Hiring Team,
+
+Below is my task submission for Option B — AI Sales Page Generator.
+
+Live URL:    https://ai-sales-page-ixxfhjy2za-et.a.run.app
+Source code: https://github.com/annashrul/sales-forge
+Walkthrough: https://youtu.be/VorzXSMBGiQ
+
+Built with Laravel 13 + Blade + Tailwind + Alpine.js, using Google Gemini 2.5 Flash for the AI generation. The app captures structured product input, drafts a complete sales page (headline, benefits, features breakdown, social proof, pricing, and CTA), renders it across three distinct design templates (Modern, Classic, Bold), and supports standalone HTML export. Hosted on Google Cloud Run with Cloud SQL Postgres.
+
+A few highlights:
+- Structured AI output via JSON schema enforcement (responseMimeType: application/json)
+- Automatic retry with a 4-model fallback chain for reliability
+- Three template variations are not just color swaps — each has its own typography and layout
+- Premium delete-confirmation modal driven by Alpine.js
+- 30 feature tests passing (auth, generation, search, delete, authorization)
+
+Detailed write-up: SUBMISSION.md in the repo root.
+
+Thank you for the opportunity. Happy to walk through any part of the system live if that would be helpful.
+
+Best regards,
+Anashrul Yusuf
+anashrulyusuf@gmail.com
